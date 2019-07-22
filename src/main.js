@@ -4,7 +4,7 @@ import router from './router'
 import axios from 'axios'
 import store from './store'
 
-import './assets/style.css'
+import './assets/css/style.css'
 
 import Viewer from 'v-viewer'//图片查看器
 import 'viewerjs/dist/viewer.css'
