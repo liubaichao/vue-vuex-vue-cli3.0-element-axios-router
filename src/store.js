@@ -41,6 +41,8 @@ export default new Vuex.Store({
         axios.get(my.api+"/getRoleArr?id="+playload.id)
         .then((res) => {
           if (res.data.code == 200) {
+            let userInfo=JSON.parse(localStorage.getItem('userInfo'))?JSON.parse(localStorage.getItem('userInfo')):{}
+            localStorage.setItem("userInfo", JSON.stringify({...userInfo,roleArr:res.data.data})) //读到最新数据后，重新录入权限树
             commit('setLoginInfo', {roleArr:res.data.data}) //重新录入权限树
             resolve(res.data.data)
           }else{

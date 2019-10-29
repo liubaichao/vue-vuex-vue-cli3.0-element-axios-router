@@ -58,7 +58,7 @@
         <el-header class="tr fz12 bgf flex justs" v-show="isShow">
           <span :class="[collapse?'el-icon-s-unfold':'el-icon-s-fold','fz16','lh60','cursor']" @click="collapse = !collapse"></span>
           <span>
-            <el-dropdown @command="handleCommand">
+            <el-dropdown @command="handleCommand" hide-timeout='1000'>
               <i class="el-icon-setting cursor" style="margin-right: 15px"></i>
               <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item command="loginOut">退出</el-dropdown-item>
@@ -68,7 +68,7 @@
           </span>
         </el-header>
         
-        <el-main class="padding0">
+        <el-main class="padding0 h100">
           <router-view/>
         </el-main>
       </el-container>
