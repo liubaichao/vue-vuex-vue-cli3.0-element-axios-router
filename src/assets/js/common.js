@@ -1,7 +1,7 @@
 
 import Vue from 'vue'
 //mock数据
-const api = 'https://easy-mock.com/mock/5d2d8a214b0b5451d8045dc7'
+const api = 'https://www.fastmock.site/mock/cef4f98b738ebc3d1c3bbf19af90a464/lbc'
 const img = 'https://dakang-images.beta.microzan.com.cn/ori/'
 
 const rows = 10
