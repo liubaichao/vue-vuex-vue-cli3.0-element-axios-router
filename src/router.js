@@ -5,12 +5,12 @@ import my from './assets/js/common.js' //全局函数
 
 import Login from './views/Login.vue'
 
-import OnlineAudit from './views/admin/OnlineAudit.vue' //线上审核
-import ReceiptList from './views/admin/ReceiptList.vue' //回执单
-import PatientList from './views/admin/PatientList.vue' //患者管理
-import DrugPoint from './views/admin/DrugPoint.vue' //领药机构
-import VolunteerList from './views/admin/VolunteerList.vue'//志愿者管理
-import ExpressList from './views/admin/ExpressList.vue'//快递管理
+// import OnlineAudit from './views/admin/OnlineAudit.vue' //线上审核
+// import ReceiptList from './views/admin/ReceiptList.vue' //回执单
+// import PatientList from './views/admin/PatientList.vue' //患者管理
+// import DrugPoint from './views/admin/DrugPoint.vue' //领药机构
+// import VolunteerList from './views/admin/VolunteerList.vue'//志愿者管理
+// import ExpressList from './views/admin/ExpressList.vue'//快递管理
 
 Vue.use(Router)
 

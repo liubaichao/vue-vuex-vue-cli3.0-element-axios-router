@@ -1,9 +1,9 @@
 <template>
-<!-- 线上审核列表 -->
-  <div class="OnlineAudit">
+<!-- 回执单列表 -->
+  <div class="ReceiptList" v-loading="loading">
     <el-row :gutter="12" class="mt10 mlr0">
       <el-col :span="24">
-        <el-card shadow="always" class='ml20 mr20' v-show="showTab">
+        <el-card shadow="always" v-show="showTab">
           <el-form :inline="true" :model="formInline" label-width="100px" class="demo-form-inline mt20">
             <el-form-item label="患者姓名">
               <el-input v-model="formInline.patientName" size="small" clearable></el-input>
@@ -50,23 +50,23 @@
             style="width: 100%">
             <el-table-column prop="patientName" label="患者姓名"></el-table-column>
             <el-table-column prop="provinceName" label="省份"></el-table-column>
-            <el-table-column prop="cityName" label="城市"></el-table-column>
+            <el-table-column prop="cityName"  label="城市"></el-table-column>
             <el-table-column prop="hospitalName" width="150" show-overflow-tooltip label="医院"></el-table-column>
-            <el-table-column prop="hospitalDeptName" label="科室"></el-table-column>
+            <el-table-column prop="hospitalDeptName"  label="科室"></el-table-column>
             <el-table-column prop="doctorName" label="医生"></el-table-column>
             <el-table-column prop="createUserName" label="志愿者"></el-table-column>
-            <el-table-column prop="giveType" label="赠药方案" :formatter='setGiveType'></el-table-column>
+            <el-table-column prop="giveType"  label="赠药方案" :formatter='setGiveType'></el-table-column>
             <el-table-column prop="isFirst" label="类型" :formatter='setIsFirst'></el-table-column>
-            <el-table-column prop="createTime" label="填报日期" :formatter='setTime'></el-table-column>
-            <el-table-column prop="commitTime" label="最后提交日期" :formatter='setTime'></el-table-column>
-            <el-table-column prop="status" label="审核结果" :formatter='setStatus'></el-table-column>
-            <el-table-column label="操作" align="center" width="60">
+            <el-table-column prop="createTime"  label="填报日期" :formatter='setTime'></el-table-column>
+            <el-table-column prop="commitTime"  label="最后提交日期" :formatter='setTime'></el-table-column>
+            <el-table-column prop="status"  label="审核结果" :formatter='setStatus'></el-table-column>
+            <el-table-column label="操作" align="center" width="50">
               <template slot-scope="scope">
                 <el-button
                   @click.native.prevent="detailRow(scope.$index, tableData)"
                   type="text"
-                  size="small">
-                  {{scope.row.status == 11?'审核':'查看'}}
+                  size="small">                 
+                  {{scope.row.status == 21?'审核':'查看'}}
                 </el-button>
               </template>
             </el-table-column>
@@ -85,7 +85,7 @@
         </el-card>
         <!-- 详情 -->
         <el-card shadow="always" class='ml20 mr20 mb70' v-show="!showTab">
-          <el-form :model="audForm" ref="audForm" label-width="60px" class="fz14" label-position='left' :inline="true" >
+          <el-form :model="audForm" ref="audForm" label-width="60px" label-position='left' class="fz14" :inline="true" >
             <el-row class="ml20 lh30">
               <el-col :span="12"><span class="fw w100px">志愿者：</span><span>{{detailData.visit?detailData.visit.createUserName:''}}</span></el-col>
               <el-col :span="12"><span class="fw w100px">填报日期：</span><span>{{detailData.visit?detailData.visit.createTime:'' | timestampToTime('YMDHMS')}}</span></el-col>
@@ -126,96 +126,51 @@
             <el-row class="ml20 lh30">
               <el-form-item
                 label='审核'
-                prop="invoiceAud"
+                prop="hasInvoice"
                 size="small"
-                :rules="[{ required: true, message: '请选择'}]"
+                :rules="[{ required: true, message: '请选择',trigger: 'change'}]"
               >
-                <el-select v-model="audForm.invoiceAud" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 11'>
-                  <el-option label="通过" :value="1"></el-option>
-                  <el-option label="不通过" :value="2"></el-option>
+                <el-select v-model="audForm.hasInvoice" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 21'>
+                  <el-option label="有" :value="1"></el-option>
+                  <el-option label="没有" :value="2"></el-option>
                 </el-select>
               </el-form-item>
               <el-form-item
-                v-if="audForm.invoiceAud == 2"
+                v-if="audForm.hasInvoice == 2"
                 label='原因'
-                prop="invoiceRemarks"
+                prop="hasInvoiceRemarks"
                 size="small"
-                :rules="[{ required: true, message: '请填写'}]"
+                :rules="[{ required: true, message: '请填写',trigger: 'blur'}]"
               >
-                <el-input v-model="audForm.invoiceRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 11'></el-input>
+                <el-input v-model="audForm.hasInvoiceRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 21'></el-input>
               </el-form-item>
-              <div v-for="(item,index) in audForm.invoiceList" :key='index' class="flex alic">
-                <el-form-item>
-                  <viewer :images='[item.url]'><img :src='item.url' width="50" height="50"/></viewer>
-                </el-form-item>
-                <el-form-item
-                  :prop="'invoiceList.' + index + '.invoiceDate'"
-                  :rules="{
-                    required: true, message: '日期不能为空', trigger: 'blur'
-                  }"
-                >
-                  <el-date-picker
-                    v-model="item.invoiceDate"
-                    type="date"
-                    value-format='yyyy-MM-dd'
-                    size="small"
-                    :disabled='detailData.visit&&detailData.visit.status != 11'
-                    placeholder="选择日期">
-                  </el-date-picker>
-                </el-form-item>
-                <el-form-item
-                  :prop="'invoiceList.' + index + '.invoiceQty'"
-                  :rules="{
-                    required: true, message: '购药支数不能为空', trigger: 'blur'
-                  }"
-                >
-                  <el-input-number v-model="item.invoiceQty" :min='1' placeholder='购药支数' size="small" :disabled='detailData.visit&&detailData.visit.status != 11'></el-input-number>
-                </el-form-item>
-                <el-form-item
-                  :prop="'invoiceList.' + index + '.invoiceNo'"
-                  :rules="{
-                    required: true, message: '发票号不能为空', trigger: 'blur'
-                  }"
-                >
-                  <el-input v-model="item.invoiceNo" placeholder='发票号' size="small" :disabled='detailData.visit&&detailData.visit.status != 11'></el-input>
-                </el-form-item>
-                <el-form-item
-                  :prop="'invoiceList.' + index + '.source'"
-                  :rules="{
-                    required: true, message: '来源不能为空', trigger: 'blur'
-                  }"
-                >
-                  <el-select v-model="item.source" placeholder="请选择" size="small" :disabled='detailData.visit&&detailData.visit.status != 11'>
-                    <el-option label="药店" :value="1"></el-option>
-                    <el-option label="门诊" :value="2"></el-option>
-                    <el-option label="医院" :value="3"></el-option>
-                  </el-select>
-                </el-form-item>
-              </div>
+              <viewer :images='detailData.visit?detailData.visit.invoiceUrl:[]' class='flex'>
+                <img :src='item' v-for="(item,i) in detailData.visit?detailData.visit.invoiceUrl:[]" :key='i' class='ml20' width="50" height="50"/>
+              </viewer>
             </el-row>
 
             <el-divider content-position="left">身份证</el-divider>
             <el-form-item
               class="ml20"
               label='审核'
-              prop="cardIdAud"
+              prop="hasCardId"
               size="small"
               :rules="[{ required: true, message: '请选择',trigger: 'change'}]"
             >
-              <el-select v-model="audForm.cardIdAud" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 11'>
-                <el-option label="通过" :value="1"></el-option>
-                <el-option label="不通过" :value="2"></el-option>
+              <el-select v-model="audForm.hasCardId" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 21'>
+                <el-option label="有" :value="1"></el-option>
+                <el-option label="没有" :value="2"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item
-              v-if="audForm.cardIdAud == 2"
+              v-if="audForm.hasCardId == 2"
               class="ml20"
               label='原因'
-              prop="cardIdRemarks"
+              prop="hasCardIdRemarks"
               size="small"
-              :rules="[{ required: true, message: '请填写'}]"
+              :rules="[{ required: true, message: '请填写',trigger: 'blur'}]"
             >
-              <el-input v-model="audForm.cardIdRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 11'></el-input>
+              <el-input v-model="audForm.hasCardIdRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 21'></el-input>
             </el-form-item>
             <viewer :images='detailData.visit?detailData.visit.cardIdUrl:[]' class='flex'>
               <img :src='item' v-for="(item,i) in detailData.visit?detailData.visit.cardIdUrl:[]" :key='i' class='ml20' width="50" height="50"/>
@@ -225,42 +180,24 @@
             <el-form-item
               class="ml20"
               label='审核'
-              prop="prescriptionAud"
+              prop="hasPrescription"
               size="small"
-              :rules="[{ required: true, message: '请选择'}]"
+              :rules="[{ required: true, message: '请选择',trigger: 'change'}]"
             >
-              <el-select v-model="audForm.prescriptionAud" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 11'>
-                <el-option label="通过" :value="1"></el-option>
-                <el-option label="不通过" :value="2"></el-option>
+              <el-select v-model="audForm.hasPrescription" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 21'>
+                <el-option label="有" :value="1"></el-option>
+                <el-option label="没有" :value="2"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item
-              v-if="audForm.prescriptionAud == 2"
+              v-if="audForm.hasPrescription == 2"
               class="ml20"
               label='原因'
-              prop="prescriptionRemarks"
+              prop="hasPrescriptionRemarks"
               size="small"
-              :rules="[{ required: true, message: '请填写'}]"
+              :rules="[{ required: true, message: '请填写',trigger: 'blur'}]"
             >
-              <el-input v-model="audForm.prescriptionRemarks" style="width:210px" clearable :disabled='detailData.visit&&detailData.visit.status != 11'></el-input>
-            </el-form-item>
-            <el-form-item
-              class="ml20"
-              label='剂量'
-              prop="dose"
-              size="small"
-              :rules="[{ required: true, message: '请填写'}]"
-            >
-              <el-input-number v-model="audForm.dose" :min='1' placeholder='每周剂量' clearable :disabled='detailData.visit&&detailData.visit.status != 11'></el-input-number>
-            </el-form-item>
-            <el-form-item
-              class="ml20"
-              label='支数'
-              prop="prescriptionCount"
-              size="small"
-              :rules="[{ required: true, message: '请填写'}]"
-            >
-              <el-input-number v-model="audForm.prescriptionCount" :min='1' placeholder='支数' clearable :disabled='detailData.visit&&detailData.visit.status != 11'></el-input-number>
+              <el-input v-model="audForm.hasPrescriptionRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 21'></el-input>
             </el-form-item>
             <viewer :images='detailData.visit?detailData.visit.prescriptionUrl:[]' class='flex'>
               <img :src='item' v-for="(item,i) in detailData.visit?detailData.visit.prescriptionUrl:[]" :key='i' class='ml20' width="50" height="50"/>
@@ -270,24 +207,24 @@
             <el-form-item
               class="ml20"
               label='审核'
-              prop="coldChainInformedAud"
+              prop="hasColdChainInformed"
               size="small"
-              :rules="[{ required: true, message: '请选择'}]"
+              :rules="[{ required: true, message: '请选择',trigger: 'change'}]"
             >
-              <el-select v-model="audForm.coldChainInformedAud" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 11'>
-                <el-option label="通过" :value="1"></el-option>
-                <el-option label="不通过" :value="2"></el-option>
+              <el-select v-model="audForm.hasColdChainInformed" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 21'>
+                <el-option label="有" :value="1"></el-option>
+                <el-option label="没有" :value="2"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item
-              v-if="audForm.coldChainInformedAud == 2"
+              v-if="audForm.hasColdChainInformed == 2"
               class="ml20"
               label='原因'
-              prop="coldChainInformedRemarks"
+              prop="hasColdChainInformedRemarks"
               size="small"
-              :rules="[{ required: true, message: '请填写'}]"
+              :rules="[{ required: true, message: '请填写',trigger: 'blur'}]"
             >
-              <el-input v-model="audForm.coldChainInformedRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 11'></el-input>
+              <el-input v-model="audForm.hasColdChainInformedRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 21'></el-input>
             </el-form-item>
             <viewer :images='detailData.visit?detailData.visit.coldChainInformedUrl:[]' class='flex'>
               <img :src='item' v-for="(item,i) in detailData.visit?detailData.visit.coldChainInformedUrl:[]" :key='i' class='ml20' width="50" height="50"/>
@@ -297,24 +234,24 @@
             <el-form-item
               class="ml20"
               label='审核'
-              prop="applicateEvaluAud"
+              prop="hasApplicateEvalu"
               size="small"
-              :rules="[{ required: true, message: '请选择'}]"
+              :rules="[{ required: true, message: '请选择',trigger: 'change'}]"
             >
-              <el-select v-model="audForm.applicateEvaluAud" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 11'>
-                <el-option label="通过" :value="1"></el-option>
-                <el-option label="不通过" :value="2"></el-option>
+              <el-select v-model="audForm.hasApplicateEvalu" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 21'>
+                <el-option label="有" :value="1"></el-option>
+                <el-option label="没有" :value="2"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item
-              v-if="audForm.applicateEvaluAud == 2"
+              v-if="audForm.hasApplicateEvalu == 2"
               class="ml20"
               label='原因'
-              prop="applicateEvaluRemarks"
+              prop="hasApplicateEvaluRemarks"
               size="small"
-              :rules="[{ required: true, message: '请填写'}]"
+              :rules="[{ required: true, message: '请填写',trigger: 'blur'}]"
             >
-              <el-input v-model="audForm.applicateEvaluRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 11'></el-input>
+              <el-input v-model="audForm.hasApplicateEvaluRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 21'></el-input>
             </el-form-item>
             <viewer :images='detailData.visit?detailData.visit.applicateEvaluUrl:[]' class='flex'>
               <img :src='item' v-for="(item,i) in detailData.visit?detailData.visit.applicateEvaluUrl:[]" :key='i' class='ml20' width="50" height="50"/>
@@ -324,24 +261,24 @@
             <el-form-item
               class="ml20"
               label='审核'
-              prop="patientInformedAud"
+              prop="hasPatientInformed"
               size="small"
-              :rules="[{ required: true, message: '请选择'}]"
+              :rules="[{ required: true, message: '请选择',trigger: 'change'}]"
             >
-              <el-select v-model="audForm.patientInformedAud" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 11'>
-                <el-option label="通过" :value="1"></el-option>
-                <el-option label="不通过" :value="2"></el-option>
+              <el-select v-model="audForm.hasPatientInformed" placeholder="请选择" :disabled='detailData.visit&&detailData.visit.status != 21'>
+                <el-option label="有" :value="1"></el-option>
+                <el-option label="没有" :value="2"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item
-              v-if="audForm.patientInformedAud == 2"
+              v-if="audForm.hasPatientInformed == 2"
               class="ml20"
               label='原因'
-              prop="patientInformedRemarks"
+              prop="hasPatientInformedRemarks"
               size="small"
-              :rules="[{ required: true, message: '请填写'}]"
+              :rules="[{ required: true, message: '请填写',trigger: 'blur'}]"
             >
-              <el-input v-model="audForm.patientInformedRemarks" style="width:500px" clearable :disabled='detailData.visit&&detailData.visit.status != 11'></el-input>
+              <el-input v-model="audForm.hasPatientInformedRemarks" style="width:500px" :disabled='detailData.visit&&detailData.visit.status != 21' clearable></el-input>
             </el-form-item>
             <viewer :images='detailData.visit?detailData.visit.patientInformedUrl:[]' class='flex'>
               <img :src='item' v-for="(item,i) in detailData.visit?detailData.visit.patientInformedUrl:[]" :key='i' class='ml20' width="50" height="50"/>
@@ -357,7 +294,7 @@
                   <el-button size="mini" type="text" @click="submitVisible = false">取消</el-button>
                   <el-button type="primary" size="mini" @click="submitData('audForm')">确定</el-button>
                 </div>
-                <el-button type="primary" size="small" slot="reference" @click="isSubmit('audForm')" :disabled='detailData.visit&&detailData.visit.status != 11'>确定</el-button>
+                <el-button type="primary" size="small" slot="reference" @click="isSubmit('audForm')" :disabled='detailData.visit&&detailData.visit.status != 21'>确定</el-button>
               </el-popover>
               <el-button type="primary" size="small" @click="showTab = true" class="ml20 mr20">返回</el-button>
             </el-footer>
@@ -365,35 +302,13 @@
         </el-card>
       </el-col>
     </el-row>
-    
   </div>
 </template>
 
 <script>
-import Vue from 'vue'
-import { 
-  Form,FormItem,Row,Col,Button ,Loading ,
-  Pagination,Table,TableColumn,Select,Option,
-  Card,Input ,DatePicker ,Footer,Divider,InputNumber,
-  Popover 
-  } from 'element-ui';
-
-const arr = [
-  Form,FormItem,Row,Col,Button ,Pagination,
-  Table,TableColumn,Select,Option,Card,
-  Input,DatePicker ,Footer,Divider,InputNumber,
-  Popover
-  ] 
-arr.map((e)=>{  //动态生成全局组件
-   //Vue.use(e);
-   Vue.component(e.name, e)
-})
-Vue.use(Loading.directive);
-
-import HelloWorld from '@/components/HelloWorld.vue'
 
 export default {
-  name: 'OnlineAudit',
+  name: 'ReceiptList',
   data() {
     return {
       loading:false,
@@ -412,25 +327,22 @@ export default {
         hospitalName:'',
         volunteer:'',
         checkStatus:1,
-        },
+      },
       editId:'',
       detailData:{},//详情
       audForm:{//审核表单
-        invoiceList:[],//{invoiceDate:'',invoiceQty:'',invoiceNo:'',source:''}
-        invoiceAud:'',
-        invoiceRemarks:'',
-        cardIdAud:'',
-        cardIdRemarks:'',
-        prescriptionAud:'',
-        prescriptionRemarks:'',
-        coldChainInformedAud:'',
-        coldChainInformedRemarks:'',
-        applicateEvaluAud:'',
-        applicateEvaluRemarks:'',
-        patientInformedAud:'',
-        patientInformedRemarks:'',
-        dose:'',
-        prescriptionCount:''
+        hasInvoice:'',
+        hasInvoiceRemarks:'',
+        hasCardId:'',
+        hasCardIdRemarks:'',
+        hasPrescription:'',
+        hasPrescriptionRemarks:'',
+        hasColdChainInformed:'',
+        hasColdChainInformedRemarks:'',
+        hasApplicateEvalu:'',
+        hasApplicateEvaluRemarks:'',
+        hasPatientInformed:'',
+        hasPatientInformedRemarks:''
       },
       status:'',
       submitVisible:false,
@@ -461,46 +373,38 @@ export default {
         this.getList({...this.formInline}) //查询
       },
     getDetail(id){
-      let that = this
-      this.$axios.get(that.$my.api + '/bms/visit/getDetail?id='+id,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+      this.$http.getDetailApi({id:id},{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){    
               let data =  res.data.data  
-              let invoice = []
               data.approveLogList.map((item)=>{
-                item.createTime = that.$my.timestampToTime(item.createTime,'YMDHMS')
+                item.createTime = this.$my.timestampToTime(item.createTime,'YMDHMS')
               })
-              data.visit.giveType = `${that.$my.giveType[data.visit.giveType]}(${that.$my.spec[data.visit.spec]})`
-              data.invoiceList.map((item)=>{ //发票
-                invoice.push({invoiceDate:that.$my.timestampToTime(item.invoiceDate,'YMD'),invoiceQty:item.invoiceQty,invoiceNo:item.invoiceNo,source:item.source,url:item.invoiceUrl,id:item.id})
-              })            
+              data.visit.giveType = `${this.$my.giveType[data.visit.giveType]}(${this.$my.spec[data.visit.spec]})`   
+              data.visit.invoiceUrl = data.visit.invoiceUrl.split(',')//购药发票        
               data.visit.cardIdUrl = data.visit.cardIdUrl.split(',')//身份证
               data.visit.prescriptionUrl = data.visit.prescriptionUrl.split(',')//处方笺
               data.visit.coldChainInformedUrl = data.visit.coldChainInformedUrl.split(',')//冷链
               data.visit.applicateEvaluUrl = data.visit.applicateEvaluUrl.split(',')//申请评估
               data.visit.patientInformedUrl = data.visit.patientInformedUrl.split(',')//患者同意书
-              that.detailData = data
-
-              that.audForm = {
-                invoiceList:invoice,
-                invoiceAud:data.visit.invoiceAud?data.visit.invoiceAud:"",
-                invoiceRemarks:data.visit.invoiceRemarks,
-                cardIdAud:data.visit.cardIdAud?data.visit.cardIdAud:'',
-                cardIdRemarks:data.visit.cardIdRemarks,
-                prescriptionAud:data.visit.prescriptionAud?data.visit.prescriptionAud:'',
-                prescriptionRemarks:data.visit.prescriptionRemarks,
-                coldChainInformedAud:data.visit.coldChainInformedAud?data.visit.coldChainInformedAud:'',
-                coldChainInformedRemarks:data.visit.coldChainInformedRemarks,
-                applicateEvaluAud:data.visit.applicateEvaluAud?data.visit.applicateEvaluAud:'',
-                applicateEvaluRemarks:data.visit.applicateEvaluRemarks,
-                patientInformedAud:data.visit.patientInformedAud?data.visit.patientInformedAud:'',
-                patientInformedRemarks:data.visit.patientInformedRemarks,
-                dose:data.visit.prescriptionDose,
-                prescriptionCount:data.visit.prescriptionCount
+              this.audForm = {
+                hasInvoice: data.visit.hasInvoice?data.visit.hasInvoice:'',
+                hasInvoiceRemarks: data.visit.hasInvoiceRemarks,
+                hasCardId: data.visit.hasCardId?data.visit.hasCardId:'',
+                hasCardIdRemarks: data.visit.hasCardIdRemarks,
+                hasPrescription: data.visit.hasPrescription?data.visit.hasPrescription:'',
+                hasPrescriptionRemarks: data.visit.hasPrescriptionRemarks,
+                hasColdChainInformed: data.visit.hasColdChainInformed?data.visit.hasColdChainInformed:'',
+                hasColdChainInformedRemarks: data.visit.hasColdChainInformedRemarks,
+                hasApplicateEvalu: data.visit.hasApplicateEvalu?data.visit.hasApplicateEvalu:'',
+                hasApplicateEvaluRemarks: data.visit.hasApplicateEvaluRemarks,
+                hasPatientInformed: data.visit.hasPatientInformed?data.visit.hasPatientInformed:'',
+                hasPatientInformedRemarks: data.visit.hasPatientInformedRemarks
               }
-              that.showTab = false
+              this.detailData = data
+              this.showTab = false
             }else{
 
-                that.$message({
+                this.$message({
                     message: res.data.msg,
                     type: 'error',
                     duration: 1500
@@ -510,22 +414,21 @@ export default {
         }).catch(function (error) {})
     },
     getList(val={}){    
-        let that = this
         this.loading = true
         let data = {
               page:1,
-              rows:that.selectRows?that.selectRows:that.$my.rows,
-              flag:'online',
+              rows:this.selectRows?this.selectRows:this.$my.rows,
+              flag:'receipt',
               ...val
             }
             data.number = data.number?data.number.join(','):''
-        this.$axios.post(that.$my.api + '/bms/visit/getList', data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+        this.$http.getListApi(data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){       
-                that.loading = false;
-                that.tableData = res.data.data
+                this.loading = false;
+                this.tableData = res.data.data
             }else{
-                that.loading = false
-                that.$message({
+                this.loading = false
+                this.$message({
                     message: res.data.msg,
                     type: 'error',
                     duration: 1500
@@ -533,54 +436,45 @@ export default {
                 return false
             } 
         }).catch(function (error) {
-          that.loading = false
+          this.loading = false
         })
       },
       isSubmit(formName){
         this.$refs[formName].validate((valid) => {
-          let arr = ['invoiceAud','cardIdAud','prescriptionAud','coldChainInformedAud','applicateEvaluAud','patientInformedAud']
+          let arr = ['hasInvoice','hasCardId','hasPrescription','hasColdChainInformed','hasApplicateEvalu','hasPatientInformed']
           let status = arr.every((item)=>this.audForm[item] != 2) ? 1 : 2;//验证(1:通过  2:不通过)
           this.status = status == 1?'通过':'不通过'
         });
       },
       submitData(formName){        
-        let that = this
         let userInfo = JSON.parse(localStorage.getItem('userInfo'))
         this.$refs[formName].validate((valid) => {
-          let so = []
-          let soArr = ['invoiceRemarks','cardIdRemarks','prescriptionRemarks','coldChainInformedRemarks','applicateEvaluRemarks','patientInformedRemarks']
-          let arr = ['invoiceAud','cardIdAud','prescriptionAud','coldChainInformedAud','applicateEvaluAud','patientInformedAud']
+          let arr = ['hasInvoice','hasCardId','hasPrescription','hasColdChainInformed','hasApplicateEvalu','hasPatientInformed']
           let status = arr.every((item)=>this.audForm[item] != 2) ? 1 : 2;//验证(1:通过  2:不通过)
-          arr.map((item,i)=>{
-            if(this.audForm[item] == 2){
-              so.push(this.audForm[soArr[i]])
-            }                                                    
-          })
           if (valid) {
             let data ={
               ...this.audForm,
               id:this.editId,
               checkStatus:status,
               employeeId:userInfo.id,
-              employeeName:userInfo.loginName,
-              failReason:so.join(',')
+              employeeName:userInfo.loginName
             }
-            this.$axios.post(that.$my.api + '/bms/visit/onlineCheck', data,{headers:{token:userInfo.token}}).then(res => { 
+            this.$http.receiptCheckApi(data,{headers:{token:userInfo.token}}).then(res => { 
                 if(res.data&&res.data.code === 200){       
-                    that.loading = false;
-                    that.submitVisible = false
-                    that.showTab = true
-                    that.$message({
+                    this.loading = false;
+                    this.submitVisible = false
+                    this.showTab = true
+                    this.$message({
                         message: res.data.message,
                         type: 'success',
                         duration: 1500
                     })
-                    that.getList({...that.formInline})
-                    that.$refs[formName].resetFields();
+                    this.getList({...this.formInline})
+                    this.$refs[formName].resetFields();
                 }else{
-                    that.loading = false
-                    that.submitVisible = false
-                    that.$message({
+                    this.loading = false
+                    this.submitVisible = false
+                    this.$message({
                         message: res.data.message,
                         type: 'error',
                         duration: 1500
@@ -588,7 +482,7 @@ export default {
                     return false
                 } 
             }).catch(function (error) {
-              that.loading = false
+              this.loading = false
             })
           } else {
             console.log('error submit!!');
@@ -614,9 +508,7 @@ export default {
       },
 
   },
-  components: {
-    HelloWorld
-  }
+
 }
 </script>
 

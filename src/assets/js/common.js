@@ -2,7 +2,6 @@
 import Vue from 'vue'
 //mock数据
 const api = 'https://www.fastmock.site/mock/cef4f98b738ebc3d1c3bbf19af90a464/lbc'
-const img = 'https://dakang-images.beta.microzan.com.cn/ori/'
 
 const rows = 10
 
@@ -47,19 +46,33 @@ const status = {
 }
 const sex = ['','男','女']
 const indication = ['','类风湿关节炎','强直性脊柱炎']
-
+// 动态加载路由 start
 const loadRouter = (roleArr = [] ,router={})=>{ //动态加载路由
   let arr = []
   roleArr.map((item)=>{
-    arr.push({
+    if(item.children.length == 0){
+      arr.push({
         path: '/'+item.path,
         name: item.path,
-        component:resolve => require([`../../views/admin/${item.path}`], resolve),//动态生成路由(江湖人称懒加载,此步) 非常重要!!!
+        component:resolve => require([`../../views/${item.path}`], resolve),//动态生成路由(江湖人称懒加载,此步) 非常重要!!!
         meta: {
           title: item.name,
           requireAuth: item.requireAuth
         }
-    })
+      })
+    }else{
+      item.children.map((n)=>{
+        arr.push({
+          path: '/'+n.path,
+          name: n.path,
+          component:resolve => require([`../../views/${item.path}/${n.path}`], resolve),//动态生成路由(江湖人称懒加载,此步) 非常重要!!!
+          meta: {
+            title: n.name,
+            requireAuth: n.requireAuth
+          }
+        })
+      })
+    }
   })
   //未定义路由重定向到logon页面
   arr.push({ 
@@ -68,6 +81,17 @@ const loadRouter = (roleArr = [] ,router={})=>{ //动态加载路由
   })
   router.addRoutes(arr)
 }
+// 动态加载路由 end
+// 自定义数组方法 start
+Array.prototype.quChong = function(attribute){ //根据属性去重
+  let obj= {}
+  let arr  = this.reduce((cur,next) => {
+    obj[next[attribute]] ? "" : obj[next[attribute]] = true && cur.push(next)
+    return cur
+  },[])
+  return arr
+}
+//自定义数组方法 end
 
 const downExcel=(url='',data={},name='excel',method='POST')=>{ //导出
   let oReq = new XMLHttpRequest();        
@@ -112,7 +136,6 @@ export default  {   //导出
     spec,
     status,
     sex,
-    img,
     insto,
     indication,
     loadRouter,

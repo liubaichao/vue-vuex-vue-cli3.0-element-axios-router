@@ -3,7 +3,7 @@
   <div class="DrugPoint" >
     <el-row :gutter="12" class="mt10 mlr0">
       <el-col :span="24">
-        <el-card shadow="always" class='ml20 mr20' v-if="showTab">
+        <el-card shadow="always" v-if="showTab">
           <el-form :inline="true" :model="formInline" label-width="100px" class="demo-form-inline mt20">
             <el-form-item label="省份">
               <el-select v-model="formInline.provinceCode" @change="provincesOnChange($event,true)" size="small" clearable>
@@ -234,25 +234,6 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import { 
-  Form,FormItem,Row,Col,Button ,Loading ,
-  Pagination,Table,TableColumn,Select,Option,Radio,RadioGroup,
-  Card,Input ,DatePicker ,Footer,Divider,InputNumber, Dialog
-  } from 'element-ui';
-
-const arr = [
-  Form,FormItem,Row,Col,Button ,Pagination,
-  Table,TableColumn,Select,Option,Card,Radio,RadioGroup,
-  Input,DatePicker ,Footer,Divider,InputNumber,Dialog
-  ] 
-arr.map((e)=>{  //动态生成全局组件
-   //Vue.use(e);
-   Vue.component(e.name, e)
-})
-Vue.use(Loading.directive);
-
-
 var checkTel = (rule, value, callback) => {
     if (!value) {
       return callback(new Error('电话不能为空'));
@@ -368,17 +349,16 @@ export default {
       this.getDetailInfoList({page:val}) //用户选择页数
     },
     changeStatus(index,data){//是否禁用
-      let that = this
-      this.$axios.get(that.$my.api + '/bms/org/changeStatus?id='+data.rows[index].id,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+      this.$http.changDrugStatusApi({id:data.rows[index].id},{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){    
-              that.$message({
+              this.$message({
                     message: res.data.message,
                     type: 'success',
                     duration: 1500
                 })
-              that.getList({...this.formInline})
+              this.getList({...this.formInline})
             }else{
-                that.$message({
+                this.$message({
                     message: res.data.message,
                     type: 'error',
                     duration: 1500
@@ -393,10 +373,9 @@ export default {
       this.instoForm.orgName = data.rows[index].orgName
     },
     submitInstoForm(formName){ //入库提交
-      let that = this
       let userInfo = JSON.parse(localStorage.getItem('userInfo'))
       if(this.instoForm.qty == 0){
-        that.$message({
+        this.$message({
             message: '入库不能为零',
             type: 'warning',
             duration: 1500
@@ -410,21 +389,21 @@ export default {
             employeeId:userInfo.id,
             employeeName:userInfo.loginName
           }
-          this.$axios.post(that.$my.api + '/bms/org/insto', data,{headers:{token:userInfo.token}}).then(res => { 
+          this.$http.instoApi(data,{headers:{token:userInfo.token}}).then(res => { 
               if(res.data&&res.data.code === 200){       
-                  that.loading = false;
-                  that.dialogVisible = false
-                  that.$message({
+                  this.loading = false;
+                  this.dialogVisible = false
+                  this.$message({
                       message: res.data.message,
                       type: 'success',
                       duration: 1500
                   })
-                  that.getList({...that.formInline})
-                  that.$refs[formName].resetFields();
+                  this.getList({...this.formInline})
+                  this.$refs[formName].resetFields();
               }else{
-                  that.loading = false
-                  that.dialogVisible = false
-                  that.$message({
+                  this.loading = false
+                  this.dialogVisible = false
+                  this.$message({
                       message: res.data.message,
                       type: 'error',
                       duration: 1500
@@ -432,7 +411,7 @@ export default {
                   return false
               } 
           }).catch(function (error) {
-            that.loading = false
+            this.loading = false
           })
         } else {
           console.log('error submit!!');
@@ -465,14 +444,12 @@ export default {
       })          
     },
     getPro(){
-      let that = this
-      this.$axios.get(this.$my.api+'/wet/base/getProList')
-        .then(res => {
+      this.$http.getProListApi().then(res => {
           if(res.data&&res.data.code == 200){
             this.provincesArr= res.data.data
-            that.getCityList(res.data.data[0].code)
+            this.getCityList(res.data.data[0].code)
           }else{
-            that.$message({
+            this.$message({
                 message: res.data.message,
                 type: 'error',
                 duration: 1500
@@ -483,9 +460,7 @@ export default {
         })
     },
     getCityList(code,isSearch){
-      let that = this
-      this.$axios.get(this.$my.api+'/wet/base/getCityList?code='+code)
-        .then(res => {
+      this.$http.getCityListApi({code:code}).then(res => {
           if(res.data&&res.data.code == 200){
             if(isSearch){
               this.searchCityArr = res.data.data
@@ -493,7 +468,7 @@ export default {
               this.cityArr= res.data.data
             }
           }else{
-            that.$message({
+            this.$message({
                 message: res.data.message,
                 type: 'error',
                 duration: 1500
@@ -535,7 +510,6 @@ export default {
       })
     },
     submitNewForm(formName){ //新增提交
-      let that = this
       let userInfo = JSON.parse(localStorage.getItem('userInfo'))
       this.$refs[formName].validate((valid) => {
         if (valid) {
@@ -544,21 +518,21 @@ export default {
             employeeId:userInfo.id,
             employeeName:userInfo.loginName
           }
-          this.$axios.post(that.$my.api + '/bms/org/savaOrModify', data,{headers:{token:userInfo.token}}).then(res => { 
+          this.$http.savaOrModifyApi(data,{headers:{token:userInfo.token}}).then(res => { 
               if(res.data&&res.data.code === 200){       
-                  that.loading = false;
-                  that.dialogNewVisible = false
-                  that.$message({
+                  this.loading = false;
+                  this.dialogNewVisible = false
+                  this.$message({
                       message: res.data.message,
                       type: 'success',
                       duration: 1500
                   })
-                  that.getList({...that.formInline})
-                  that.$refs[formName].resetFields();
+                  this.getList({...this.formInline})
+                  this.$refs[formName].resetFields();
               }else{
-                  that.loading = false
-                  that.dialogNewVisible = false
-                  that.$message({
+                  this.loading = false
+                  this.dialogNewVisible = false
+                  this.$message({
                       message: res.data.message,
                       type: 'error',
                       duration: 1500
@@ -566,7 +540,7 @@ export default {
                   return false
               } 
           }).catch(function (error) {
-            that.loading = false
+            this.loading = false
           })
         } else {
           console.log('error submit!!');
@@ -588,7 +562,7 @@ export default {
       },
     getDetail(id){//机构详情
       return new Promise((rel,err)=>{
-        this.$axios.get(this.$my.api + '/bms/org/getInfo?id='+id,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+        this.$http.getDrugInfoApi({id:id},{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){    
               this.detailData = res.data.data
               rel(res.data.data)
@@ -605,21 +579,20 @@ export default {
       
     },
     getDetailInfoList(val={}){    //患者赠药列表
-        let that = this
         this.loading = true
         let data = {
-              id:that.editId,
+              id:this.editId,
               page:1,
-              rows:that.detailSelectRows?that.detailSelectRows:that.$my.rows,
+              rows:this.detailSelectRows?this.detailSelectRows:this.$my.rows,
               ...val
             }
-        this.$axios.post(that.$my.api + '/bms/org/getOrgInsto', data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+        this.$http.getOrgInstoApi(data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){       
-                that.loading = false;
-                that.detailDataList = res.data.data
+                this.loading = false;
+                this.detailDataList = res.data.data
             }else{
-                that.loading = false
-                that.$message({
+                this.loading = false
+                this.$message({
                     message: res.data.message,
                     type: 'error',
                     duration: 1500
@@ -627,27 +600,26 @@ export default {
                 return false
             } 
         }).catch(function (error) {
-          that.loading = false
+          this.loading = false
         })
       },
     getList(val={}){    
-        let that = this
         this.loading = true
         let data = {
               page:1,
-              rows:that.selectRows?that.selectRows:that.$my.rows,
+              rows:this.selectRows?this.selectRows:this.$my.rows,
               flag:'online',
               giveStatus:0,
               ...val
             }
             data.number = data.number?data.number.join(','):''
-        this.$axios.post(that.$my.api + '/bms/org/getList', data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+        this.$http.getDrugListApi(data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){       
-                that.loading = false;
-                that.tableData = res.data.data
+                this.loading = false;
+                this.tableData = res.data.data
             }else{
-                that.loading = false
-                that.$message({
+                this.loading = false
+                this.$message({
                     message: res.data.message,
                     type: 'error',
                     duration: 1500
@@ -655,7 +627,7 @@ export default {
                 return false
             } 
         }).catch(function (error) {
-          that.loading = false
+          this.loading = false
         })
       },
       downExcel(){

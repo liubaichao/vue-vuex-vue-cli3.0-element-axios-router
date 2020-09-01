@@ -39,35 +39,26 @@
 
 <script>
 import Vue from 'vue'
-import { Form,FormItem,Row,Col,Button ,Loading ,Message} from 'element-ui';
 import {mapState,mapGetters,mapActions,mapMutations} from 'vuex'
-
-const arr = [Form,FormItem,Row,Col,Button ] 
-arr.map((e)=>{  //动态生成全局组件
-   //Vue.use(e);
-   Vue.component(e.name, e)
-})
-Vue.use(Loading.directive);
-Vue.prototype.$message = Message; //加不加都行，新版不需要加
 
 export default {
     name: 'Login',
     data() {
-    return {
-        loading: true, //页面loading
-        form: {
-            loginName: '',
-            password: ''
-        },
-        rules: { // 表单规则验证
-            loginName: [
-                { required: true, message: '请输入用户名', trigger: 'blur' }
-            ],
-            password: [
-                { required: true, message: '请输入密码', trigger: 'change' }
-            ]
+        return {
+            loading: true, //页面loading
+            form: {
+                loginName: '',
+                password: ''
+            },
+            rules: { // 表单规则验证
+                loginName: [
+                    { required: true, message: '请输入用户名', trigger: 'blur' }
+                ],
+                password: [
+                    { required: true, message: '请输入密码', trigger: 'change' }
+                ]
+            }
         }
-    }
   },
   methods: {
     ...mapMutations(['setLoginInfo']),
@@ -77,25 +68,24 @@ export default {
 	    }  
     },
     submitLogin(formName){
-        let that = this
         this.$refs[formName].validate((valid) => {
           if (valid) {
             this.loading = true
-            this.$axios.post(that.$my.api + '/bms/login/login', that.form).then(res => { // 登录
+            this.$http.loginApi(this.form).then(res => { // 登录
                 if(res.data.code === 200){
                     localStorage.setItem("userInfo", JSON.stringify(res.data.data))
-                    that.setLoginInfo(res.data.data)
-                    that.$my.loadRouter(res.data.data.roleArr ,that.$router)
-                    that.loading = false
-                    that.$message({
+                    this.setLoginInfo(res.data.data)
+                    this.$my.loadRouter(res.data.data.roleArr ,this.$router)
+                    this.loading = false
+                    this.$message({
                         message: res.data.message,
                         type: 'success',
                         duration: 1500
                     })
-                    that.$router.push('/OnlineAudit')      
+                    this.$router.push('/OnlineAudit')      
                 }else{
-                    that.loading = false
-                    that.$message({
+                    this.loading = false
+                    this.$message({
                         message: res.data.message,
                         type: 'error',
                         duration: 1500
@@ -110,9 +100,8 @@ export default {
     },
   },
   mounted() {
-    let that = this
     setTimeout(function(){
-        that.loading = false
+        this.loading = false
     },200)
   },
   computed: {

@@ -3,7 +3,7 @@
   <div class="ExpressList" >
     <el-row :gutter="12" class="mt10 mlr0">
       <el-col :span="24">
-        <el-card shadow="always" class='ml20 mr20' >
+        <el-card shadow="always">
           <el-form :inline="true" :model="formInline" label-width="100px" class="demo-form-inline mt20">
             <el-form-item label="患者姓名">
               <el-input v-model="formInline.patientName" size="small" clearable></el-input>
@@ -128,24 +128,6 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import { 
-  Form,FormItem,Row,Col,Button ,Loading ,
-  Pagination,Table,TableColumn,Select,Option,Radio,RadioGroup,
-  Card,Input ,DatePicker ,Footer,Divider,InputNumber, Dialog
-  } from 'element-ui';
-
-const arr = [
-  Form,FormItem,Row,Col,Button ,Pagination,
-  Table,TableColumn,Select,Option,Card,Radio,RadioGroup,
-  Input,DatePicker ,Footer,Divider,InputNumber,Dialog
-  ] 
-arr.map((e)=>{  //动态生成全局组件
-   //Vue.use(e);
-   Vue.component(e.name, e)
-})
-Vue.use(Loading.directive);
-
 export default {
   name: 'ExpressList',
   data() {
@@ -218,7 +200,6 @@ export default {
       })
     },
     submitNewForm(formName){ //新增提交
-      let that = this
       let userInfo = JSON.parse(localStorage.getItem('userInfo'))
       this.$refs[formName].validate((valid) => {
         if (valid) {
@@ -227,21 +208,21 @@ export default {
             // employeeId:userInfo.id,
             // employeeName:userInfo.loginName
           }
-          this.$axios.post(that.$my.api + '/bms/express/modify', data,{headers:{token:userInfo.token}}).then(res => { 
+          this.$http.exModifyApi(data,{headers:{token:userInfo.token}}).then(res => { 
               if(res.data&&res.data.code === 200){       
-                  that.loading = false;
-                  that.dialogNewVisible = false
-                  that.$message({
+                  this.loading = false;
+                  this.dialogNewVisible = false
+                  this.$message({
                       message: res.data.message,
                       type: 'success',
                       duration: 1500
                   })
-                  that.getList({...that.formInline})
-                  that.$refs[formName].resetFields();
+                  this.getList({...this.formInline})
+                  this.$refs[formName].resetFields();
               }else{
-                  that.loading = false
-                  that.dialogNewVisible = false
-                  that.$message({
+                  this.loading = false
+                  this.dialogNewVisible = false
+                  this.$message({
                       message: res.data.message,
                       type: 'error',
                       duration: 1500
@@ -249,7 +230,7 @@ export default {
                   return false
               } 
           }).catch(function (error) {
-            that.loading = false
+            this.loading = false
           })
         } else {
           console.log('error submit!!');
@@ -264,7 +245,7 @@ export default {
       },
     getDetail(id){//机构详情
       return new Promise((rel,err)=>{
-        this.$axios.get(this.$my.api + '/bms/express/getInfo?id='+id,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+        this.$http.getExInfoApi({id:id},{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){    
               rel(res.data.data)
             }else{
@@ -280,21 +261,20 @@ export default {
       
     },
     getList(val={}){    
-        let that = this
         this.loading = true
         let data = {
               page:1,
-              rows:that.selectRows?that.selectRows:that.$my.rows,
+              rows:this.selectRows?this.selectRows:this.$my.rows,
               ...val
             }
             data.number = data.number?data.number.join(','):''
-        this.$axios.post(that.$my.api + '/bms/express/getList', data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+        this.$http.getEXListApi(data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){       
-                that.loading = false;
-                that.tableData = res.data.data
+                this.loading = false;
+                this.tableData = res.data.data
             }else{
-                that.loading = false
-                that.$message({
+                this.loading = false
+                this.$message({
                     message: res.data.message,
                     type: 'error',
                     duration: 1500
@@ -302,7 +282,7 @@ export default {
                 return false
             } 
         }).catch(function (error) {
-          that.loading = false
+          this.loading = false
         })
       },
       downExcel(){

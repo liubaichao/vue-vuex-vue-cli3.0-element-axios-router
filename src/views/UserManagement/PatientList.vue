@@ -3,7 +3,7 @@
   <div class="PatientList" v-loading="loading">
     <el-row :gutter="12" class="mt10 mlr0">
       <el-col :span="24">
-        <el-card shadow="always" class='ml20 mr20' v-if="showTab">
+        <el-card shadow="always" v-if="showTab">
           <el-form :inline="true" :model="formInline" label-width="100px" class="demo-form-inline mt20">
             <el-form-item label="省份">
               <el-select v-model="formInline.provinceCode" @change="provincesOnChange" size="small" clearable>
@@ -157,23 +157,6 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import { 
-  Form,FormItem,Row,Col,Button ,Loading ,
-  Pagination,Table,TableColumn,Select,Option,
-  Card,Input ,DatePicker ,Footer,Divider,InputNumber, 
-  } from 'element-ui';
-
-const arr = [
-  Form,FormItem,Row,Col,Button ,Pagination,
-  Table,TableColumn,Select,Option,Card,
-  Input,DatePicker ,Footer,Divider,InputNumber,
-  ] 
-arr.map((e)=>{  //动态生成全局组件
-   //Vue.use(e);
-   Vue.component(e.name, e)
-})
-Vue.use(Loading.directive);
 
 export default {
   name: 'PatientList',
@@ -250,14 +233,12 @@ export default {
       this.getCityList(values) //根据省code获取城市
     },
     getPro(){
-      let that = this
-      this.$axios.get(this.$my.api+'/wet/base/getProList')
-        .then(res => {
+      this.$http.getProListApi().then(res => {
           if(res.data&&res.data.code == 200){
             this.provincesArr= res.data.data
-            that.getCityList(res.data.data[0].code)
+            this.getCityList(res.data.data[0].code)
           }else{
-            that.$message({
+            this.$message({
                 message: res.data.message,
                 type: 'error',
                 duration: 1500
@@ -268,13 +249,11 @@ export default {
         })
     },
     getCityList(code){
-      let that = this
-      this.$axios.get(this.$my.api+'/wet/base/getCityList?code='+code)
-        .then(res => {
+      this.$http.getCityListApi({code:code}).then(res => {
           if(res.data&&res.data.code == 200){
             this.cityArr= res.data.data
           }else{
-            that.$message({
+            this.$message({
                 message: res.data.message,
                 type: 'error',
                 duration: 1500
@@ -285,14 +264,13 @@ export default {
         });
     },
     getDetail(id){
-      let that = this
-      this.$axios.get(that.$my.api + '/bms/patient/getInfo?id='+id,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+      this.$http.getPatientInfoApi({id:id},{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){    
-              that.detailData = res.data.data
-              that.showTab = false
+              this.detailData = res.data.data
+              this.showTab = false
             }else{
 
-                that.$message({
+                this.$message({
                     message: res.data.msg,
                     type: 'error',
                     duration: 1500
@@ -302,21 +280,20 @@ export default {
         }).catch(function (error) {})
     },
     getDetailInfoList(val={}){    //患者赠药列表
-        let that = this
         this.loading = true
         let data = {
-              id:that.editId,
+              id:this.editId,
               page:1,
-              rows:that.detailSelectRows?that.detailSelectRows:that.$my.rows,
+              rows:this.detailSelectRows?this.detailSelectRows:this.$my.rows,
               ...val
             }
-        this.$axios.post(that.$my.api + '/bms/patient/getPaVisit', data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+        this.$http.getPaVisitApi(data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){       
-                that.loading = false;
-                that.detailDataList = res.data.data
+                this.loading = false;
+                this.detailDataList = res.data.data
             }else{
-                that.loading = false
-                that.$message({
+                this.loading = false
+                this.$message({
                     message: res.data.msg,
                     type: 'error',
                     duration: 1500
@@ -324,24 +301,23 @@ export default {
                 return false
             } 
         }).catch(function (error) {
-          that.loading = false
+          this.loading = false
         })
       },
     getList(val={}){    
-        let that = this
         this.loading = true
         let data = {
               page:1,
-              rows:that.selectRows?that.selectRows:that.$my.rows,
+              rows:this.selectRows?this.selectRows:this.$my.rows,
               ...val
             }
-        this.$axios.post(that.$my.api + '/bms/patient/getList', data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
+        this.$http.getPatientListApi(data,{headers:{token:JSON.parse(localStorage.getItem('userInfo')).token}}).then(res => { 
             if(res.data&&res.data.code === 200){       
-                that.loading = false;
-                that.tableData = res.data.data
+                this.loading = false;
+                this.tableData = res.data.data
             }else{
-                that.loading = false
-                that.$message({
+                this.loading = false
+                this.$message({
                     message: res.data.msg,
                     type: 'error',
                     duration: 1500
@@ -349,7 +325,7 @@ export default {
                 return false
             } 
         }).catch(function (error) {
-          that.loading = false
+          this.loading = false
         })
       },
       downExcel(){
