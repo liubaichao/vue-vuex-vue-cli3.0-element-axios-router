@@ -45,7 +45,7 @@ export default {
     name: 'Login',
     data() {
         return {
-            loading: true, //页面loading
+            loading: false, //页面loading
             form: {
                 loginName: '',
                 password: ''
